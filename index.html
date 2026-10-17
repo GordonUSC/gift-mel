@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Same Day Sky</title>
+<meta name="description" content="For Mel: another province and home for dinner.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Same Day Sky">
+<meta property="og:image" content="https://gordonusc.github.io/gift-mel/img/sky.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Josefin+Sans:wght@400;700&display=swap">
+<style>
+:root{--outer:#2a1c2e;--ink:#fffaf3;--accent:#ffe1b0;--card:#3b2440f2;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--outer);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{font:16px/1.4 "Josefin Sans",system-ui,sans-serif;color:var(--ink)}
+.stage{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,calc(100svh*9/16));overflow:hidden;background:var(--outer)}
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.cap{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 18px);text-align:center;padding:0 18px;pointer-events:none;text-shadow:0 2px 14px #000c}
+.cap small{display:block;font-weight:700;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
+.cap h1{margin:6px 0 4px;font:400 clamp(36px,11vw,54px) "Pacifico",cursive;line-height:1.02;text-wrap:balance}
+.cap p{margin:0 auto;max-width:30ch;font-size:15px;opacity:.92}
+.hud{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);text-align:center;pointer-events:none;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--accent);text-shadow:0 2px 10px #000}
+.end{position:absolute;left:8%;right:8%;top:50%;transform:translateY(-50%) scale(.9);opacity:0;transition:opacity .9s,transform .9s;text-align:center;pointer-events:none;padding:22px 18px;border-radius:18px;background:var(--card);box-shadow:0 20px 60px -20px #000}
+.end.on{opacity:1;transform:translateY(-50%) scale(1);pointer-events:auto}
+.end h2{margin:0 0 8px;font:400 clamp(26px,7.5vw,34px) "Pacifico",cursive;line-height:1.08;text-wrap:balance}
+.end p{margin:0;font-size:15.5px;opacity:.95}
+.end button{margin-top:14px;font:700 13px "Josefin Sans",system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;padding:9px 16px;border-radius:999px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer}
+.foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);text-align:center;font-size:11px;opacity:.7;pointer-events:none;text-shadow:0 1px 6px #000}
+.stamps{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);display:flex;justify-content:center;gap:14px;pointer-events:none}.stamps span{font:700 13px "Josefin Sans",sans-serif;letter-spacing:.18em;padding:8px 10px;border:2px dashed #ffe1b088;border-radius:10px;color:#ffe1b088;transform:rotate(-4deg);transition:all .4s}.stamps span.on{color:#2a1c2e;background:#ffe1b0;border-style:solid;border-color:#ffe1b0;transform:rotate(3deg) scale(1.08);box-shadow:0 6px 18px #0006}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <img class="bg" id="bg" src="img/sky.jpg" alt="A retro travel poster of a jet over the prairies at sunrise">
+  <canvas id="cv"></canvas>
+  <div class="cap"><small>For Mel</small><h1>Same Day Sky</h1><p>Another province and home before dinner. Tap the plane to fly the day.</p></div>
+  <div class="hud" id="hud">Leg 1: Winnipeg to Vancouver</div>
+  <div class="stamps" id="stamps"><span>YWG</span><span>YVR</span><span>HOME</span></div>
+  <div class="end" id="end"><h2>Home for dinner.</h2><p>Two provinces, one day, zero fuss. You make the sky look easy, Mel.</p><button id="again">Fly it again</button></div>
+  <div class="foot">made by Darby, Gordon's AI assistant, with love from Gordon</div>
+</div>
+<script>
+// Sound: ElevenLabs files only (see PROVENANCE.json). WebAudio just plays and mixes them.
+let ac=null, master=null; const bufs={}; const SND=["chime","takeoff","landing","music"];
+function audio(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=.9; master.connect(ac.destination); SND.forEach(load);}catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+async function load(n){ if(bufs[n]) return bufs[n]; try{ const r=await fetch('snd/'+n+'.mp3'); const a=await r.arrayBuffer(); bufs[n]=await new Promise((ok,no)=>ac.decodeAudioData(a,ok,no)); }catch(e){} return bufs[n]; }
+async function play(n,vol=1,loop=false,rate=1){ if(!audio()) return null; const b=await load(n); if(!b) return null; const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=b; s.loop=loop; s.playbackRate.value=rate; g.gain.value=vol; s.connect(g).connect(master); s.start(); return {s,g,t0:ac.currentTime}; }
+function fade(h,t=.4){ if(!h||!ac) return; try{ h.g.gain.cancelScheduledValues(ac.currentTime); h.g.gain.setTargetAtTime(0,ac.currentTime,t/3); setTimeout(()=>{try{h.s.stop();}catch(e){}},t*1000+300); }catch(e){} }
+// Canvas sized to the frame; P() maps a point in the painting (0..1) through object-fit:cover.
+const cv=document.getElementById('cv'), x=cv.getContext('2d'), bg=document.getElementById('bg'), DPR=Math.min(devicePixelRatio||1,2);
+let W=0,H=0; function size(){ W=cv.width=cv.clientWidth*DPR; H=cv.height=cv.clientHeight*DPR; } size(); addEventListener('resize',size);
+function cover(){ const iw=bg.naturalWidth||752, ih=bg.naturalHeight||1344, s=Math.max(W/iw,H/ih); return {s,ox:(W-iw*s)/2,oy:(H-ih*s)/2,iw,ih}; }
+function P(fx,fy){ const c=cover(); return [c.ox+fx*c.iw*c.s, c.oy+fy*c.ih*c.s]; }
+function S(f){ const c=cover(); return f*c.iw*c.s; }
+function pt(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR]; }
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=id=>document.getElementById(id), hud=$('hud'), end=$('end');
+
+const ROUTE=[[[.18,.66],[.5,.36],[.86,.6]],[[.86,.6],[.5,.3],[.14,.64]]];
+let leg=0, flying=false, t=0, music=null; const stamps=[...$('stamps').children]; stamps[0].classList.add('on');
+const trail=[];
+function bez(p,t){ const [a,b,c]=p.map(q=>P(...q)); const u=1-t; return [u*u*a[0]+2*u*t*b[0]+t*t*c[0], u*u*a[1]+2*u*t*b[1]+t*t*c[1]]; }
+cv.addEventListener('pointerdown',async e=>{ audio(); if(flying||leg>1) return; const [px,py]=pt(e); const [ax,ay]=bez(ROUTE[leg],0); if(Math.hypot(px-ax,py-ay)>S(.2)) { play('chime',.5); return; }
+  play('chime',.8); setTimeout(()=>play('takeoff',.8),700); setTimeout(()=>{ flying=true; t=0; trail.length=0; },900); });
+$('again').onclick=()=>{ end.classList.remove('on'); fade(music); leg=0; stamps.forEach((s,i)=>s.classList.toggle('on',i===0)); hud.textContent='Leg 1: Winnipeg to Vancouver'; };
+const TINT=[[255,170,120,.0],[120,180,255,.12],[255,120,90,.28]];
+(function loop(){ x.clearRect(0,0,W,H); const now=performance.now();
+  const tint=TINT[Math.min(leg+(flying?t:0),2)|0]; x.fillStyle=`rgba(${tint[0]},${tint[1]},${tint[2]},${tint[3]})`; x.fillRect(0,0,W,H);
+  if(leg<=1){ x.setLineDash([6*DPR,8*DPR]); x.strokeStyle='rgba(255,250,240,.7)'; x.lineWidth=2*DPR; x.beginPath(); for(let k=0;k<=40;k++){ const [qx,qy]=bez(ROUTE[leg],k/40); k?x.lineTo(qx,qy):x.moveTo(qx,qy); } x.stroke(); x.setLineDash([]); }
+  if(flying){ t=Math.min(t+.006,1); if(t>=1){ flying=false; play('landing',.8); stamps[leg+1].classList.add('on'); leg++; if(leg===1) hud.textContent='Leg 2: home for dinner'; else { hud.textContent=''; setTimeout(async()=>{ music=await play('music',.85); setTimeout(()=>end.classList.add('on'),1600); },900); } } }
+  const tt=flying?t:(leg>1?1:0); const L=Math.min(leg,1); const [px,py]=bez(ROUTE[L],flying?t:(leg>1?1:0)); const [qx,qy]=bez(ROUTE[L],Math.min((flying?t:0)+.01,1));
+  if(flying){ trail.push([px,py]); if(trail.length>60) trail.shift(); trail.forEach((p,i)=>{ x.fillStyle=`rgba(255,255,255,${i/60*.6})`; x.beginPath(); x.arc(p[0],p[1],2.4*DPR*(i/60),0,7); x.fill(); }); }
+  if(leg<=1||flying){ const ang=Math.atan2(qy-py,qx-px)||(L?Math.PI:0); x.save(); x.translate(px,py); x.rotate(ang); const s=DPR*1.1; x.fillStyle='#fffaf3'; x.beginPath(); x.ellipse(0,0,18*s,4.2*s,0,0,7); x.fill(); x.beginPath(); x.moveTo(-2*s,0); x.lineTo(-9*s,-14*s); x.lineTo(-4*s,-14*s); x.lineTo(6*s,0); x.lineTo(-4*s,14*s); x.lineTo(-9*s,14*s); x.closePath(); x.fill(); x.beginPath(); x.moveTo(-14*s,0); x.lineTo(-19*s,-7*s); x.lineTo(-16*s,0); x.lineTo(-19*s,7*s); x.closePath(); x.fill(); x.restore();
+    if(!flying&&leg<=1){ const r=S(.06)*(1+.15*Math.sin(now/300)); x.strokeStyle='rgba(255,225,176,.8)'; x.lineWidth=2*DPR; x.beginPath(); x.arc(px,py,r,0,7); x.stroke(); } }
+  requestAnimationFrame(loop); })();
+
+</script>
+</body>
+</html>

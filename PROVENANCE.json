@@ -1,0 +1,22 @@
+{
+ "img/sky.jpg": {
+  "tool": "higgsfield",
+  "prompt": "Retro travel poster of a jet over Canadian prairies at sunrise (gpt_image_2_5, job 4a1103e1)"
+ },
+ "snd/chime.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "airplane cabin two-tone chime (flow EjN3Qbap6wp3cNKDdkTp)"
+ },
+ "snd/takeoff.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "jet takeoff whoosh (flow EjN3Qbap6wp3cNKDdkTp)"
+ },
+ "snd/landing.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "gentle touchdown wheel squeak (flow EjN3Qbap6wp3cNKDdkTp)"
+ },
+ "snd/music.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "uplifting euphoric trance anthem, 22 s (eleven_music_v2_5, flow EjN3Qbap6wp3cNKDdkTp)"
+ }
+}
